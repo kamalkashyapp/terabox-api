@@ -5,20 +5,22 @@ module.exports = async (req, res) => {
   const { url } = req.query;
 
   if (!url || (!url.includes("terabox.com") && !url.includes("1024terabox.com"))) {
-    return res.status(400).json({ error: "Invalid TeraBox URL" });
+    return res.status(400).json({ error: "Invalid or missing TeraBox URL." });
   }
 
   try {
-    const response = await axios.get(url, {
-      headers: { "User-Agent": "Mozilla/5.0" },
+    const page = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+      },
     });
 
-    const $ = cheerio.load(response.data);
+    const $ = cheerio.load(page.data);
     let pageData = {};
 
     $("script").each((i, el) => {
       const content = $(el).html();
-      const match = content && content.match(/window\\.pageData\\s*=\\s*(\\{.*\\});/);
+      const match = content && content.match(/window\.pageData\s*=\s*(\{.*?\});/s);
       if (match && match[1]) {
         pageData = JSON.parse(match[1]);
       }
@@ -27,7 +29,7 @@ module.exports = async (req, res) => {
     const videoInfo = pageData?.videoPreviewPlayInfo?.meta?.mediaInfo?.[0];
 
     if (!videoInfo) {
-      return res.status(404).json({ error: "Video not found or not a video file." });
+      return res.status(404).json({ error: "Video not found or unsupported file." });
     }
 
     return res.status(200).json({
@@ -36,8 +38,9 @@ module.exports = async (req, res) => {
       m3u8: videoInfo.play_url,
       type: videoInfo.type,
     });
-  } catch (error) {
-    console.error("TeraBox parse error:", error.message);
-    return res.status(500).json({ error: "Something went wrong while fetching video data." });
+  } catch (err) {
+    console.error("Error:", err.message);
+    return res.status(500).json({ error: "Failed to extract video data." });
   }
 };
+                                
