@@ -5,7 +5,7 @@ module.exports = async (req, res) => {
   const { url } = req.query;
 
   if (!url || (!url.includes("terabox.com") && !url.includes("1024terabox.com"))) {
-    return res.status(400).json({ error: "Invalid or missing TeraBox URL." });
+    return res.status(400).json({ error: "Missing or invalid TeraBox URL." });
   }
 
   try {
@@ -28,19 +28,18 @@ module.exports = async (req, res) => {
 
     const videoInfo = pageData?.videoPreviewPlayInfo?.meta?.mediaInfo?.[0];
 
-    if (!videoInfo) {
-      return res.status(404).json({ error: "Video not found or unsupported file." });
+    if (!videoInfo || !videoInfo.play_url) {
+      return res.status(404).json({ error: "Video not found or unsupported content." });
     }
 
     return res.status(200).json({
-      title: pageData.share?.share_title || "Untitled",
-      size: videoInfo.size,
+      title: pageData.share?.share_title || "Untitled Video",
       m3u8: videoInfo.play_url,
-      type: videoInfo.type,
+      size: videoInfo.size,
+      type: videoInfo.type
     });
   } catch (err) {
     console.error("Error:", err.message);
     return res.status(500).json({ error: "Failed to extract video data." });
   }
 };
-                                
