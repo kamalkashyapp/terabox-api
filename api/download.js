@@ -1,4 +1,3 @@
-
 // api/download.js
 const axios = require("axios");
 const cheerio = require("cheerio");
@@ -44,5 +43,4 @@ export default async function handler(req, res) {
     console.error("Error parsing TeraBox page:", err.message);
     res.status(500).json({ error: "Failed to extract video info." });
   }
-      }
-      
+}
